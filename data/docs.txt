@@ -1,0 +1,9 @@
+Retrieval-Augmented Generation (RAG) is a technique that combines retrieval with generation.
+
+FAISS is a library used for efficient similarity search and clustering of dense vectors.
+
+Large Language Models (LLMs) are AI models trained on large datasets to generate human-like text.
+
+FastAPI is a modern Python web framework used for building APIs.
+
+Cricket is a popular sport played between two teams of eleven players.

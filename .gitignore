@@ -1,0 +1,65 @@
+# --- OS files ---
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Environment variables ---
+.env
+.env.*
+!.env.example
+
+# --- Node.js ---
+node_modules/
+dist/
+build/
+.next/
+out/
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env/
+.venv/
+
+# --- IDE / Editor ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- Cache ---
+.cache/
+.tmp/
+temp/
+
+# --- Coverage ---
+coverage/
+.nyc_output/
+
+# --- Misc ---
+*.zip
+*.tar
+*.gz
+
+# --- Database ---
+*.sqlite
+*.db
+
+# --- AI / Large files ---
+*.pt
+*.pth
+*.onnx
+*.h5
+
+# --- Secrets ---
+*.pem
+*.key
