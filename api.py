@@ -7,7 +7,7 @@ from graph import build_graph
 from schemas import QueryRequest, QueryResponse
 from fastapi.responses import StreamingResponse
 import asyncio
-from memory import get_history, save_message
+from memory_redis import get_history, save_message
 
 # Initialize FastAPI
 app = FastAPI(title="Agentic AI API")
