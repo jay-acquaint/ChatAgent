@@ -8,7 +8,7 @@ from llm import get_ollama_llm
 def query_decomposer(query: str) -> list[str]:
 
     # Ollama LLM
-    llm = get_ollama_llm(model="mistral", temperature=0.7)
+    llm = get_ollama_llm(model="mistral", temperature=0.2)
 
     # Initialize the parser for structured output
     parser = PydanticOutputParser(pydantic_object=QueryDecomposerOutput)

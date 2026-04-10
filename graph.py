@@ -10,6 +10,22 @@ from query_refiner import refine_query
 from tools import web_search_tool
 from reflection import reflect_answer
 from confidence import compute_confidence
+from concurrent.futures import ThreadPoolExecutor
+import time
+from functools import wraps
+
+
+def timed_node(name):
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(state):
+            t0 = time.perf_counter()
+            result = fn(state)
+            elapsed = time.perf_counter() - t0
+            print(f"[TIMER] {name}: {elapsed:.2f}s")
+            return result
+        return wrapper
+    return decorator
 
 
 # STATE (shared memory)
@@ -28,6 +44,7 @@ class GraphState(TypedDict):
 
 
 # NODES
+@timed_node("decompose")
 def decompose_node(state: GraphState):
     queries = query_decomposer(state["query"])
     print("\n[Decompose] ->", queries)
@@ -37,23 +54,31 @@ def decompose_node(state: GraphState):
     }
 
 
+@timed_node("retrive")
 def retrieve_node(state: GraphState):
     retriever = get_retriever()
     all_docs = []
 
-    for q in state["queries"]:
-        docs = retriever.invoke(q)
-        all_docs.extend(docs)
+    def fetch(q):
+        return retriever.invoke(q)
 
-    # Deduplicate
+    if not state["queries"]:
+        print("\n[Retrieve] No queries to fetch")
+        return {"docs": []}
+
+    with ThreadPoolExecutor(max_workers=len(state["queries"])) as ex:
+        results = list(ex.map(fetch, state["queries"]))
+
+    all_docs = [doc for docs in results for doc in docs]
     unique_docs = list({doc.page_content: doc for doc in all_docs}.values())
 
-    print(f"\n[Retrieve] -> {len(unique_docs)} docs")
+    print(f"\n[Retrieve] -> {len(unique_docs)} docs (parallel)")
     return {"docs": unique_docs}
 
 
+@timed_node("rerank")
 def rerank_node(state: GraphState):
-    reranked = rerank(state["query"], state["docs"], top_k=5)
+    reranked = rerank(state["query"], state["docs"], top_k=3)
 
     # FILTER BAD DOCS
     filtered = [(doc, score) for doc, score in reranked if score > 0]
@@ -65,6 +90,7 @@ def rerank_node(state: GraphState):
     return {"reranked_docs": filtered}
 
 
+@timed_node("generate")
 def generate_node(state: GraphState):
     # Handle no relevant docs
     if not state["reranked_docs"]:
@@ -92,6 +118,7 @@ def generate_node(state: GraphState):
     return {"result": result}
 
 
+@timed_node("verify")
 def verify_node(state: GraphState):
     # Skip verification if no docs
     if not state["reranked_docs"]:
@@ -121,6 +148,7 @@ def verify_node(state: GraphState):
     return {"verification": verification}
 
 
+@timed_node("evaluate")
 def evaluate_node(state: GraphState):
     result = state.get("result")
     reranked_docs = state.get("reranked_docs", [])
@@ -148,6 +176,7 @@ def evaluate_node(state: GraphState):
     }
 
 
+@timed_node("retry")
 def retry_node(state: GraphState):
     retries = state.get("retries", 0) + 1
 
@@ -184,6 +213,7 @@ def retry_node(state: GraphState):
     }
 
 
+@timed_node("tool")
 def tool_node(state: GraphState):
     print("\n[Tool] Using Web Search Tool 🌍")
 
@@ -206,6 +236,7 @@ def tool_node(state: GraphState):
     }
 
 
+@timed_node("reflect")
 def reflect_node(state: GraphState):
     result = state["result"]
 
@@ -233,6 +264,7 @@ def reflect_node(state: GraphState):
     }
 
 
+@timed_node("context")
 def context_node(state: GraphState):
     history = state.get("chat_history", [])
 
@@ -258,6 +290,7 @@ def context_node(state: GraphState):
 
 
 # ROUTER (CORE LOGIC)
+@timed_node("route_after_evaluate")
 def route_after_evaluate(state: GraphState):
     result = state["result"]
 
@@ -285,6 +318,8 @@ def route_after_evaluate(state: GraphState):
         return "end"
 
     # Decision logic
+    if not is_valid and retries == 0:
+        return "reflect"
     if retries < 2:
         if not is_valid or confidence < 0.6:
             print("[Decision] Verifier failed → Retry 🔁")

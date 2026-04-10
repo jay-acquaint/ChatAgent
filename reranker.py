@@ -4,7 +4,7 @@ from sentence_transformers import CrossEncoder
 model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
 
 
-def rerank(query: str, docs: list, top_k: int = 5):
+def rerank(query: str, docs: list, top_k: int = 3):
     """
     Rerank documents based on relevance to query
     """

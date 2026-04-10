@@ -38,7 +38,7 @@ def verify_answer(query: str, answer: str, docs: list):
         format_instructions=parser.get_format_instructions()
     )
 
-    llm = get_ollama_llm(model="mistral", temperature=0.7)
+    llm = get_ollama_llm(model="mistral", temperature=0)
     response = llm.invoke(formatted)
 
     result = parser.parse(response.content)

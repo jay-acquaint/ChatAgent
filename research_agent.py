@@ -22,30 +22,16 @@ def generate_answer(query: str, docs: list):
 
     context = "\n\n".join(context_blocks)
 
-    prompt = ChatPromptTemplate.from_template("""
-    You are an advanced AI Research Assistant.
+    prompt = ChatPromptTemplate.from_template("""Answer using ONLY the context below. If not found, say "I don't know".
+        Output strict JSON per format.
 
-    STRICT RULES:
-    - UsSE ONLY THE PROVIDED CONTEXT
-    - Do NOT use prior knowledge
-    - IF ANSWER IS MISSING THAN SAY ONLY THIS - "I don't know"
-    - Be precise and factual
+        Context:
+        {context}
 
-    TASK:
-    1. Understand the question
-    2. Extract relevant info from context
-    3. Generate a clear answer
-    4. Provide EXACTLY 3 bullet points summary
-    5. Give a real-world example
-    6. Cite sources using [index] numbers
+        {format_instructions}
 
-    CONTEXT:
-    {context}
-
-    {format_instructions}
-
-    Question: {question}
-    """)
+        Q: {question}"""
+    )
 
     formatted = prompt.format_prompt(
         context=context,
