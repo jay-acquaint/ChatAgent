@@ -280,6 +280,10 @@ def route_after_evaluate(state: GraphState):
 
     print(f"\n[Routing] Confidence: {confidence}, Valid: {is_valid}, Retries: {retries}")
 
+    if confidence > 0.8:
+        print("[Decision] High confidence → Finish ✅")
+        return "end"
+
     # Decision logic
     if retries < 2:
         if not is_valid or confidence < 0.6:
@@ -300,16 +304,16 @@ def build_graph():
     builder = StateGraph(GraphState)
 
     # Nodes
+    builder.add_node("context", context_node)
     builder.add_node("decompose", decompose_node)
     builder.add_node("retrieve", retrieve_node)
     builder.add_node("rerank", rerank_node)
     builder.add_node("generate", generate_node)
+    builder.add_node("reflect", reflect_node)
     builder.add_node("verify", verify_node)
     builder.add_node("evaluate", evaluate_node)
     builder.add_node("retry", retry_node)
     builder.add_node("tool", tool_node)
-    builder.add_node("reflect", reflect_node)
-    builder.add_node("context", context_node)
 
     # Entry
     builder.set_entry_point("context")
@@ -334,8 +338,7 @@ def build_graph():
         }
     )
 
-    # Retry goes back to retrieval
     builder.add_edge("tool", "generate")
-    builder.add_edge("retry", "retrieve")
+    builder.add_edge("retry", "retrieve") # Retry goes back to retrieval
 
     return builder.compile()
