@@ -67,9 +67,8 @@ async def ask_question(request: QueryRequest):
         "failed_attempts": []
     }
     print("state--------->>>>>>>>", state)
-    # Run graph
-    loop = asyncio.get_event_loop()
-    result = await loop.run_in_executor(None, graph.invoke, state)
+    # Run graph in a thread because graph.invoke is blocking
+    result = await asyncio.to_thread(graph.invoke, state)
     final = result.get("result")
 
     # Extract answer
